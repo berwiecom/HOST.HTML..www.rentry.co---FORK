@@ -9,12 +9,12 @@ load_dotenv()
 base_url = os.getenv('BASE_PROTOCOL', 'https://') + os.getenv('BASE_URL', 'rentry.co')
 client = RentryClient(base_url)
 
-# metadata is a newline-separated string, as on the website.
-# A dict works too and is sent as JSON, e.g.:
-#   metadata={'OPTION_DISABLE_VIEWS': True, 'CONTENT_TEXT_COLOR': ['grey', 'red']}
+# metadata is a dict, sent to the API as JSON. A newline-separated string,
+# as on the website, works too, e.g.:
+#   metadata='OPTION_DISABLE_VIEWS = true \n CONTAINER_MAX_WIDTH = 600px'
 result = client.new(
     text='hello world',
-    metadata='OPTION_DISABLE_VIEWS = true \n CONTAINER_MAX_WIDTH = 600px',
+    metadata={'OPTION_DISABLE_VIEWS': True, 'CONTAINER_MAX_WIDTH': '600px'},
     # url='custom-url',            # random if not given
     # edit_code='custom-code',     # random if not given
 )

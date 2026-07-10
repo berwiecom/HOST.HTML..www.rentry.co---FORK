@@ -11,7 +11,7 @@ client = RentryClient(base_url)
 
 page = client.new(
     text='upsert example',
-    metadata='OPTION_DISABLE_VIEWS = true \n CONTAINER_MAX_WIDTH = 600px',
+    metadata={'OPTION_DISABLE_VIEWS': True, 'CONTAINER_MAX_WIDTH': '600px'},
 )
 assert page['status'] == '200', page['content']
 print(page)
@@ -23,6 +23,6 @@ result = client.edit(
     page['url_short'],
     page['edit_code'],
     update_mode='upsert',
-    metadata='CONTAINER_PADDING = 10px',
+    metadata={'CONTAINER_PADDING': '10px'},
 )
 print(result)

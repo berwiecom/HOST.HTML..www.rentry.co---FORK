@@ -9,7 +9,7 @@ load_dotenv()
 base_url = os.getenv('BASE_PROTOCOL', 'https://') + os.getenv('BASE_URL', 'rentry.co')
 client = RentryClient(base_url)
 
-page = client.new(text='fetch example', metadata='OPTION_DISABLE_VIEWS = true')
+page = client.new(text='fetch example', metadata={'OPTION_DISABLE_VIEWS': True})
 assert page['status'] == '200', page['content']
 print(page)
 

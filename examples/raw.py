@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Get a page's raw markdown text via the /api/raw endpoint.
 
-This example does not work without further adjustments! Access requires either:
-- a rentry-auth access code (request one from support@rentry.co), passed as
-  auth_code below — this grants access to all pages, or
-- the page's own SECRET_RAW_ACCESS_CODE metadata value, passed the same way.
+This example does not work without further adjustments! Raw access is never
+open by default. Access codes are issued by rentry admins (request one from
+support@rentry.co); a page's SECRET_RAW_ACCESS_CODE metadata can only be set
+to an already-issued code. Access is granted when either:
+- the request bears an issued access code (passed as auth_code below) — this
+  grants raw access to ALL pages, or
+- the page itself has an issued SECRET_RAW_ACCESS_CODE set — the page is then
+  raw-readable without any auth_code.
 """
 
 import os

@@ -8,7 +8,7 @@ import getopt
 import sys
 import urllib.parse
 import urllib.request
-from json import loads as json_loads
+from json import dumps as json_dumps, loads as json_loads
 from os import environ
 
 try:
@@ -41,9 +41,19 @@ class UrllibClient:
         return response
 
 
-def raw(url):
+def raw(url, auth_code=''):
     client = UrllibClient()
-    return json_loads(client.get(base_url + '/api/raw/{}'.format(url)).data)
+    headers = {'rentry-auth': auth_code} if auth_code else {}
+    return json_loads(client.get(base_url + '/api/raw/{}'.format(url), headers).data)
+
+
+def fetch(url, edit_code):
+    client = UrllibClient()
+
+    payload = {
+        'edit_code': edit_code
+    }
+    return json_loads(client.post(base_url + '/api/fetch/{}'.format(url), payload).data)
 
 
 def new(url, edit_code, text):
@@ -101,12 +111,13 @@ def exit_with_errors(response):
 
 def usage():
     print('''
-Usage: rentry {new | edit | raw | delete | update} {-h | --help} {-u | --url} {-p | --edit-code} {-f | --field} {-v | --value} text
+Usage: rentry {new | edit | raw | fetch | delete | update} {-h | --help} {-u | --url} {-p | --edit-code} {-f | --field} {-v | --value} {-a | --auth-code} text
 
 Commands:
   new     create a new entry
   edit    edit an existing entry's text
   raw     get raw markdown text of an existing entry
+  fetch   fetch an entry's full details (text, metadata, dates) as JSON
   delete  delete an entry
   update  update an entry's edit code, url or modify code
 
@@ -116,6 +127,7 @@ Options:
   -p, --edit-code EDIT-CODE  edit code for the entry, random if not specified
   -f, --field FIELD-NAME     the field you wish to update (use on update command only)
   -v, --value VALUE          the value you wish to update (use on update command only)
+  -a, --auth-code CODE       rentry-auth access code (use on raw command only)
 
 Fields: (for use on update command only)
   edit_code
@@ -129,7 +141,9 @@ Examples:
   cat FILE | rentry new                    # read from FILE and paste it to rentry
   cat FILE | rentry edit -p pw -u example  # read from FILE and edit the example entry
   rentry raw -u example                    # get raw markdown text
+  rentry raw -u example -a CODE            # with a rentry-auth access code
   rentry raw -u https://rentry.co/example  # -u accepts absolute and relative urls
+  rentry fetch -u example -p pw            # fetch full details as JSON
 
   rentry delete -p pw -u example          # deletes an entry
   rentry update -p pw -u example -f 'edit_code' -v 'new-pw'   # Sets the edit code to something new
@@ -142,11 +156,11 @@ Examples:
 if __name__ == '__main__':
     try:
         environ.pop('POSIXLY_CORRECT', None)
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "hu:p:f:v:", ["help", "url=", "edit-code=", "field=", "value="])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "hu:p:f:v:a:", ["help", "url=", "edit-code=", "field=", "value=", "auth-code="])
     except getopt.GetoptError as e:
         sys.exit("error: {}".format(e))
 
-    command, url, edit_code, field, value, text = None, '', '', '', None, None
+    command, url, edit_code, field, value, auth_code, text = None, '', '', '', None, '', None
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -160,10 +174,12 @@ if __name__ == '__main__':
             field = a
         elif o in ("-v", "--value"):
             value = a
+        elif o in ("-a", "--auth-code"):
+            auth_code = a
 
     command = (args[0:1] or [None])[0]
     command or sys.exit(usage())
-    command in ['new', 'edit', 'raw', 'delete', 'update'] or sys.exit('error: command must be new, edit, raw, delete or update')
+    command in ['new', 'edit', 'raw', 'fetch', 'delete', 'update'] or sys.exit('error: command must be new, edit, raw, fetch, delete or update')
 
     text = (args[1:2] or [None])[0]
     if not text and command in ('new', 'edit'):
@@ -187,10 +203,19 @@ if __name__ == '__main__':
 
     elif command == 'raw':
         url or sys.exit('error: url is required')
-        response = raw(url)
+        response = raw(url, auth_code)
         if response['status'] != '200':
             sys.exit('error: {}'.format(response['content']))
         print(response['content'])
+
+    elif command == 'fetch':
+        url or sys.exit('error: url is required')
+        edit_code or sys.exit('error: edit code is required')
+
+        response = fetch(url, edit_code)
+        if response['status'] != '200':
+            exit_with_errors(response)
+        print(json_dumps(response['content'], indent=2))
 
     elif command == 'delete':
         url or sys.exit('error: url is required')

@@ -18,7 +18,7 @@ client = RentryClient(base_url)
 
 page = client.new(
     text='secret metadata example',
-    metadata='SECRET_EMAIL_ADDRESS = someone@example.com',
+    metadata={'SECRET_EMAIL_ADDRESS': 'someone@example.com'},
 )
 assert page['status'] == '200', page['content']
 print(page)
@@ -29,7 +29,7 @@ result = client.edit(
     page['url_short'],
     page['edit_code'],
     text='SECRET survives this edit',
-    metadata='PAGE_TITLE = Example',
+    metadata={'PAGE_TITLE': 'Example'},
 )
 print(result)
 
@@ -38,7 +38,7 @@ result = client.edit(
     page['url_short'],
     page['edit_code'],
     text='SECRET changed by this edit',
-    metadata='SECRET_EMAIL_ADDRESS = new@example.com',
+    metadata={'SECRET_EMAIL_ADDRESS': 'new@example.com'},
     update_secret_metadata=True,
 )
 print(result)
