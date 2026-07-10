@@ -2,35 +2,53 @@
 
 <a href="https://rentry.co/"><img width="110" height="110" src="https://rentry.co/static/logo-border-fit.png" align="right" alt="rentry.co markdown paste repository"></a>
 
-[Rentry.co](https://rentry.co) is markdown-powered paste/publishing service with preview, custom urls and editing. 
+[Rentry.co](https://rentry.co) is a markdown-powered paste/publishing service with preview, custom urls and editing.
 
-This repository contains a simple script that allows pasting and editing from command line interface. It also gives examples for accessing each endpoint programatically.
-  
+This repository contains the official Python clients for the rentry API:
+
+- **`rentry.py`** — a self-contained command-line tool (single file, no dependencies)
+- **`rentry_client`** — an installable Python library
+- **`examples/`** — one runnable script per API use case
+- an [API reference](#usage-api) for writing your own client
+
 ## Installation
 
-##### Manually:  
+### Command-line tool
+
+The CLI is a single self-contained file:
+
 ```sh
-wget https://raw.githubusercontent.com/radude/rentry/master/rentry -O ./rentry && chmod +x ./rentry
+wget https://raw.githubusercontent.com/radude/rentry/master/rentry.py -O ./rentry && chmod +x ./rentry
 ```
 
+### Python library
 
+```sh
+git clone https://github.com/radude/rentry.git
+cd rentry
+pip install .
+```
 
-pip install -r 'requirements.txt'
-cp env_example .env
+The library has no dependencies. To run the scripts in `examples/` you also need `pip install -r requirements.txt` (python-dotenv, for reading a `.env` file).
 
-## Usage (Command Interface)
+### Configuration
+
+Both the CLI and the examples default to `https://rentry.co`. To target another instance (e.g. a local dev server), copy `env_example` to `.env` and adjust `BASE_PROTOCOL` / `BASE_URL`.
+
+## Usage (Command-line)
 
 ```console
 $ rentry --help
 
-Usage: rentry {new | edit | raw} {-h | --help} {-u | --url} {-p | --edit-code} text
+Usage: rentry {new | edit | raw | delete | update} {-h | --help} {-u | --url} {-p | --edit-code} {-f | --field} {-v | --value} text
 
 Commands:
   new     create a new entry
   edit    edit an existing entry's text
   raw     get raw markdown text of an existing entry
   delete  delete an entry
-    
+  update  update an entry's edit code, url or modify code
+
 Options:
   -h, --help                 show this help message and exit
   -u, --url URL              url for the entry, random if not specified
@@ -45,7 +63,7 @@ Fields: (for use on update command only)
 
 Examples:
   rentry new 'markdown text'               # new entry with random url and edit code
-  rentry new -p pw -u example 'text'       # with custom edit code and url 
+  rentry new -p pw -u example 'text'       # with custom edit code and url
   rentry edit -p pw -u example 'text'      # edit the example entry
   cat FILE | rentry new                    # read from FILE and paste it to rentry
   cat FILE | rentry edit -p pw -u example  # read from FILE and edit the example entry
@@ -57,22 +75,52 @@ Examples:
   rentry update -p pw -u example -f 'url' -v 'new_url'        # Sets the url to something new
   rentry update -p pw -u example -f 'modify_code' -v 'm:1'    # Sets the modify code to something new
   rentry update -p pw -u example -f 'modify_code' -v ''       # Unsets the modify code
-  
 ```
 
 ##### Url
 
-Optional Url can be set (`-u, --url URL`)  
+Optional Url can be set (`-u, --url URL`)
 It goes rentry.co/HERE. If no Url was set then random Url will be generated automatically.
 
 ##### Edit code
 
-Optional edit code can be set (`-p, --edit-code EDIT-CODE`)  
+Optional edit code can be set (`-p, --edit-code EDIT-CODE`)
 It can be used to edit the entry later. If no edit code was set then random edit code will be generated automatically. Generated edit code will be shown to you only once, so remember it or save it. You can share this code with anyone so a group of people can edit the same entry.
 
-## Usage (API)
+## Usage (Library)
 
-See the example scripts for a quick start.
+```python
+from rentry_client import RentryClient
+
+client = RentryClient()  # or RentryClient('https://my-instance.example')
+
+page = client.new(text='hello world', metadata='PAGE_TITLE = Hello')
+print(page['url'], page['edit_code'])
+
+client.edit(page['url_short'], page['edit_code'], text='updated!')
+
+details = client.fetch(page['url_short'], page['edit_code'])
+print(details)
+```
+
+Every method returns the parsed API response as a dict; `response['status']` is `'200'` on success, and errors are described in `response['content']` / `response['errors']`.
+
+### Examples
+
+Each script in [`examples/`](examples/) demonstrates exactly one use case and is runnable as-is:
+
+| Script | Use case |
+|---|---|
+| [`examples/new.py`](examples/new.py) | Create a page, with metadata |
+| [`examples/edit.py`](examples/edit.py) | Update a page's text with its edit code |
+| [`examples/edit_upsert.py`](examples/edit_upsert.py) | Change some metadata options without replacing the rest |
+| [`examples/edit_modify_code.py`](examples/edit_modify_code.py) | Set a modify code, then edit with it |
+| [`examples/edit_secret_metadata.py`](examples/edit_secret_metadata.py) | SECRET_* metadata: preserved by default, opt in to change it |
+| [`examples/fetch.py`](examples/fetch.py) | Fetch a page's full details |
+| [`examples/delete.py`](examples/delete.py) | Delete a page |
+| [`examples/raw.py`](examples/raw.py) | Read raw text with a rentry-auth access code |
+
+## Usage (API)
 
 Send a standard POST request to the below endpoints. The /api endpoints are CSRF-exempt — no csrf token, cookies or Referer header are needed.
 
