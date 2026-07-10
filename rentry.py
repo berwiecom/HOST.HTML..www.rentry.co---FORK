@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import getopt
-import http.cookiejar
 import sys
 import urllib.parse
 import urllib.request
-from http.cookies import SimpleCookie
 from json import loads as json_loads
 from os import environ
 from dotenv import load_dotenv, dotenv_values
@@ -13,16 +11,11 @@ from dotenv import load_dotenv, dotenv_values
 load_dotenv()
 env = dotenv_values()
 
-_headers = {"Referer": f"{env['BASE_PROTOCOL']}{env['BASE_URL']}"}
+# The /api endpoints are CSRF-exempt: no csrf token, cookies or Referer header needed.
 
 
 class UrllibClient:
-    """Simple HTTP Session Client, keeps cookies."""
-
-    def __init__(self):
-        self.cookie_jar = http.cookiejar.CookieJar()
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookie_jar))
-        urllib.request.install_opener(self.opener)
+    """Simple HTTP client."""
 
     def get(self, url, headers={}):
         request = urllib.request.Request(url, headers=headers)
@@ -34,7 +27,7 @@ class UrllibClient:
         return self._request(request)
 
     def _request(self, request):
-        response = self.opener.open(request)
+        response = urllib.request.urlopen(request)
         response.status_code = response.getcode()
         response.data = response.read().decode('utf-8')
         return response
@@ -48,33 +41,25 @@ def raw(url):
 
 
 def new(url, edit_code, text):
-    client, cookie = UrllibClient(), SimpleCookie()
-
-    cookie.load(vars(client.get(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}"))['headers']['Set-Cookie'])
-    csrftoken = cookie['csrftoken'].value
+    client = UrllibClient()
 
     payload = {
-        'csrfmiddlewaretoken': csrftoken,
         'url': url,
         'edit_code': edit_code,
         'text': text
     }
-    return json_loads(client.post(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}" + '/api/new', payload, headers=_headers).data)
+    return json_loads(client.post(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}" + '/api/new', payload).data)
 
 
 def edit(url, edit_code, text):
-    client, cookie = UrllibClient(), SimpleCookie()
-
-    cookie.load(vars(client.get(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}"))['headers']['Set-Cookie'])
-    csrftoken = cookie['csrftoken'].value
+    client = UrllibClient()
 
     payload = {
-        'csrfmiddlewaretoken': csrftoken,
         'edit_code': edit_code,
         'text': text
     }
 
-    return json_loads(client.post(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}" + '/api/edit/{}'.format(url), payload, headers=_headers).data)
+    return json_loads(client.post(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}" + '/api/edit/{}'.format(url), payload).data)
 
 
 def usage():

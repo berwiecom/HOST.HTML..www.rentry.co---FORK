@@ -1,27 +1,17 @@
 #!/usr/bin/env python3
 
-import getopt
-import http.cookiejar
-import sys
 import urllib.parse
 import urllib.request
-from http.cookies import SimpleCookie
 import json
-from os import environ
 from dotenv import load_dotenv, dotenv_values
 
 load_dotenv()
 env = dotenv_values()
 
-_headers = {"Referer": f"{env['BASE_PROTOCOL']}{env['BASE_URL']}"}
+# The /api endpoints are CSRF-exempt: no csrf token, cookies or Referer header needed.
 
 class UrllibClient:
-    """Simple HTTP Session Client, keeps cookies."""
-
-    def __init__(self):
-        self.cookie_jar = http.cookiejar.CookieJar()
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookie_jar))
-        urllib.request.install_opener(self.opener)
+    """Simple HTTP client."""
 
     def get(self, url, headers={}):
         request = urllib.request.Request(url, headers=headers)
@@ -33,15 +23,12 @@ class UrllibClient:
         return self._request(request)
 
     def _request(self, request):
-        response = self.opener.open(request)
+        response = urllib.request.urlopen(request)
         response.status_code = response.getcode()
         response.data = response.read().decode('utf-8')
         return response
 
-client, cookie = UrllibClient(), SimpleCookie()
-
-cookie.load(vars(client.get(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}"))['headers']['Set-Cookie'])
-csrftoken = cookie['csrftoken'].value
+client = UrllibClient()
 
 # Provide metadata as a newline separated string, as on the website
 metadata = 'OPTION_DISABLE_VIEWS = true \n \
@@ -56,9 +43,8 @@ metadata = json.dumps(metadata_obj)
 
 
 payload = {
-    'csrfmiddlewaretoken': csrftoken,
     'text': 'test',
     'metadata' : metadata
 }
-result = json.loads(client.post(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}" + '/api/new', payload, headers=_headers).data)
+result = json.loads(client.post(f"{env['BASE_PROTOCOL']}{env['BASE_URL']}" + '/api/new', payload).data)
 print(result)

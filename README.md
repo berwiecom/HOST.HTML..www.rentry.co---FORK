@@ -74,7 +74,7 @@ It can be used to edit the entry later. If no edit code was set then random edit
 
 See the example scripts for a quick start.
 
-Send a standard POST request to the below endpoints. Make sure to provide a csrf token and a request header.
+Send a standard POST request to the below endpoints. The /api endpoints are CSRF-exempt — no csrf token, cookies or Referer header are needed.
 
 Starred fields are required. replace [url] with the actual URL in question (without brackets).
 
@@ -91,7 +91,6 @@ All fields that can be used as well as set (url, edit_code, modify_code) have ne
 
 Fields:
 
-* csrfmiddlewaretoken *
 * text *
 * metadata
 * url
@@ -103,20 +102,27 @@ You may provide a modify code to the edit_code field if one is set. Use this to 
 
 Fields:
 
-* csrfmiddlewaretoken *
 * edit_code *
 * text
 * metadata
 * update_mode
+* update_secret_metadata ('true' or 'false', defaults to 'false' — see below)
 * new_url
 * new_edit_code
 * new_modify_code (provide 'm:' to unset, this matches the website's functionality)
+
+##### update_secret_metadata
+
+SECRET_* metadata (SECRET_EMAIL_ADDRESS, SECRET_RAW_ACCESS_CODE, SECRET_VERIFY) is protected against accidental removal. When update_secret_metadata is 'false' or omitted, any SECRET_* option that was previously set on the entry is preserved as-is, no matter what the request sends for it — omitted, blanked, or changed values are all ignored for those keys.
+
+To modify or remove a previously-set SECRET_* option, pass update_secret_metadata as the string 'true'. Adding a brand-new SECRET_* option to an entry that didn't have it never requires the flag. Alternatively, update_mode 'upsert' leaves omitted SECRETs untouched as before.
+
+**Behavior change note:** clients that previously removed SECRET_* options by omitting them in a full-replace edit will now silently keep them until they add update_secret_metadata 'true'.
 
 ### /raw/[url]
 
 Fields:
 
-* csrfmiddlewaretoken *
 * url
 
 Headers:
@@ -133,7 +139,6 @@ To fetch metadata, please use /fetch endpoint
 
 Fields:
 
-* csrfmiddlewaretoken *
 * edit_code *
 
 Returns:
@@ -153,5 +158,4 @@ Returns:
 
 Fields:
 
-* csrfmiddlewaretoken *
 * edit_code *
