@@ -33,12 +33,36 @@ result = client.edit(
 )
 print(result)
 
-# To actually change (or remove) a previously-set SECRET, opt in explicitly.
+# Trying to CHANGE the SECRET without the flag fails SILENTLY: the API returns
+# status 200 as if it worked, but SECRET_EMAIL_ADDRESS keeps its old value.
+# There is no error in the response.
+result = client.edit(
+    page['url_short'],
+    page['edit_code'],
+    text='this edit does not actually change the SECRET',
+    metadata={'SECRET_EMAIL_ADDRESS': 'new@example.com'},
+    #update_secret_metadata=True,
+)
+print(result)
+
+# To actually change a previously-set SECRET, opt in explicitly.
 result = client.edit(
     page['url_short'],
     page['edit_code'],
     text='SECRET changed by this edit',
     metadata={'SECRET_EMAIL_ADDRESS': 'new@example.com'},
+    update_secret_metadata=True,
+)
+print(result)
+
+# Removing a previously-set SECRET also needs the opt-in flag. In the default
+# (replace) mode, drop the key by omitting it from the metadata. In upsert mode,
+# send it blank instead — see edit_upsert.py for that pattern.
+result = client.edit(
+    page['url_short'],
+    page['edit_code'],
+    text='SECRET removed by this edit',
+    metadata={'PAGE_TITLE': 'Example'},  # SECRET_EMAIL_ADDRESS omitted -> removed
     update_secret_metadata=True,
 )
 print(result)

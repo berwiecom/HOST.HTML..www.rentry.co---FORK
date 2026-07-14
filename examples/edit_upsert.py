@@ -26,3 +26,17 @@ result = client.edit(
     metadata={'CONTAINER_PADDING': '10px'},
 )
 print(result)
+
+# Remove an existing option in upsert mode by sending it with a blank value.
+# Here CONTAINER_MAX_WIDTH is removed while everything else is kept. (In the
+# default replace mode you would instead just omit the key. A blank value in
+# replace mode is an error, not a removal.) SECRET_* options need the extra
+# update_secret_metadata=True flag to be removed this way — see
+# edit_secret_metadata.py.
+result = client.edit(
+    page['url_short'],
+    page['edit_code'],
+    update_mode='upsert',
+    metadata={'CONTAINER_MAX_WIDTH': ''},
+)
+print(result)

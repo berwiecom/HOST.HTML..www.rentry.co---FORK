@@ -13,15 +13,21 @@ This repository contains the official Python clients for the rentry API:
 
 ## Installation
 
-### Command-line tool
+```sh
+pip install rentry
+```
 
-The CLI is a single self-contained file:
+This installs both the `rentry` command-line tool and the `rentry_client` Python library. No dependencies.
+
+### Single-file CLI (no pip)
+
+The CLI also works as a single self-contained file:
 
 ```sh
 wget https://raw.githubusercontent.com/radude/rentry/master/rentry.py -O ./rentry && chmod +x ./rentry
 ```
 
-### Python library
+### From source
 
 ```sh
 git clone https://github.com/radude/rentry.git
@@ -29,7 +35,7 @@ cd rentry
 pip install .
 ```
 
-The library has no dependencies. To run the scripts in `examples/` you also need `pip install -r requirements.txt` (python-dotenv, for reading a `.env` file).
+To run the scripts in `examples/` you also need `pip install -r requirements.txt` (python-dotenv, for reading a `.env` file).
 
 ### Configuration
 

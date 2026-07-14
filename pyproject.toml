@@ -3,22 +3,34 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rentry-client"
-version = "1.0.0"
-description = "Python client for the rentry.co markdown paste service API"
+name = "rentry"
+version = "2.0.0"
+description = "Python client and command-line tool for the rentry.co markdown paste service"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
-keywords = ["rentry", "markdown", "paste", "pastebin", "api"]
+keywords = ["rentry", "markdown", "paste", "pastebin", "cli", "api"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Utilities",
+    "Topic :: Text Processing :: Markup",
 ]
 dependencies = []
 
 [project.urls]
 Homepage = "https://rentry.co"
+Source = "https://github.com/radude/rentry"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[project.scripts]
+rentry = "rentry:main"
+
+[tool.setuptools]
+# The standalone CLI at the repo root ships as a top-level module so the
+# console script reuses it; the library lives in src/rentry_client.
+py-modules = ["rentry"]
+packages = ["rentry_client"]
+
+[tool.setuptools.package-dir]
+rentry_client = "src/rentry_client"

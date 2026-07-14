@@ -153,7 +153,7 @@ Examples:
     ''')
 
 
-if __name__ == '__main__':
+def main():
     try:
         environ.pop('POSIXLY_CORRECT', None)
         opts, args = getopt.gnu_getopt(sys.argv[1:], "hu:p:f:v:a:", ["help", "url=", "edit-code=", "field=", "value=", "auth-code="])
@@ -239,3 +239,7 @@ if __name__ == '__main__':
         if response['status'] != '200':
             exit_with_errors(response)
         print('Ok')
+
+
+if __name__ == '__main__':
+    main()
