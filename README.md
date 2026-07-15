@@ -4,12 +4,7 @@
 
 [Rentry.co](https://rentry.co) is a markdown-powered paste/publishing service with preview, custom urls and editing.
 
-This repository contains the official Python clients for the rentry API:
-
-- **`rentry.py`** — a self-contained command-line tool (single file, no dependencies)
-- **`rentry_client`** — an installable Python library
-- **`examples/`** — one runnable script per API use case
-- an [API reference](#usage-api) for writing your own client
+This repo holds the official Python clients for the rentry API. `rentry.py` is a command-line tool in a single file with no dependencies. `rentry_client` is an installable library. `examples/` has one runnable script per API use case. If you'd rather write your own client, skip to the [API reference](#usage-api).
 
 ## Installation
 
@@ -17,7 +12,7 @@ This repository contains the official Python clients for the rentry API:
 pip install rentry
 ```
 
-This installs both the `rentry` command-line tool and the `rentry_client` Python library. No dependencies.
+That gives you both the `rentry` command-line tool and the `rentry_client` library, with no dependencies.
 
 ### Single-file CLI (no pip)
 
@@ -35,11 +30,11 @@ cd rentry
 pip install .
 ```
 
-To run the scripts in `examples/` you also need `pip install -r requirements.txt` (python-dotenv, for reading a `.env` file).
+The scripts in `examples/` additionally want `pip install -r requirements.txt`, which pulls in python-dotenv for reading a `.env` file.
 
 ### Configuration
 
-Both the CLI and the examples default to `https://rentry.co`. To target another instance (e.g. a local dev server), copy `env_example` to `.env` and adjust `BASE_PROTOCOL` / `BASE_URL`.
+Both the CLI and the examples default to `https://rentry.co`. Copy `.env.example` to `.env` and adjust `BASE_PROTOCOL` / `BASE_URL` if you need to point them somewhere else, such as a local dev server.
 
 ## Usage (Command-line)
 
@@ -113,11 +108,11 @@ details = client.fetch(page['url_short'], page['edit_code'])
 print(details)
 ```
 
-Every method returns the parsed API response as a dict; `response['status']` is `'200'` on success, and errors are described in `response['content']` / `response['errors']`.
+Every method hands back the parsed API response as a dict. On success, `response['status']` is `'200'`. When something goes wrong, the details are in `response['content']` and `response['errors']`.
 
 ### Examples
 
-Each script in [`examples/`](examples/) demonstrates exactly one use case and is runnable as-is:
+Each script in [`examples/`](examples/) covers one use case and runs as-is:
 
 | Script | Use case |
 |---|---|
@@ -133,7 +128,9 @@ Each script in [`examples/`](examples/) demonstrates exactly one use case and is
 
 ## Usage (API)
 
-Send a standard POST request to the below endpoints. The /api endpoints are CSRF-exempt — no csrf token, cookies or Referer header are needed.
+Send a standard POST request to the below endpoints. 
+
+NEW: The /api endpoints are CSRF-exempt, so you don't need a csrf token, cookies or a Referer header.
 
 Starred fields are required. replace [url] with the actual URL in question (without brackets).
 
@@ -148,7 +145,7 @@ The metadata field accepts either of two syntaxes:
 * Newline-separated `KEY = value` pairs, as on the website: `"PAGE_TITLE = Hello\nCONTAINER_MAX_WIDTH = 600px"`
 * A JSON object: `{"OPTION_DISABLE_VIEWS": true, "CONTENT_TEXT_COLOR": ["grey", "red"]}`
 
-The full list of metadata options (page, sharing, safety, container and content styling, secrets — ~63 in total) is documented at [rentry.co/metadata-how](https://rentry.co/metadata-how).
+There are roughly 63 options in total, covering the page itself, sharing, safety, container and content styling, and secrets. All of them are documented at [rentry.co/metadata-how](https://rentry.co/metadata-how).
 
 ### Returns
 
@@ -156,7 +153,7 @@ The full list of metadata options (page, sharing, safety, container and content 
 * content (if status is not 200, the error will be displayed here. Otherwise, all return values below are returned contained within this field)
 * errors (on validation failures: the field-level error messages)
 
-Responses are always delivered with HTTP 200; check the `status` value inside the JSON body. Statuses a client should handle: `200` success, `400` validation failed (details in `errors`), `403` access denied (raw access codes), `404` entry does not exist, `405` wrong HTTP method, `429` rate limited (back off and retry later), `503` database temporarily unavailable.
+Responses always come back with HTTP 200, so check the `status` value inside the JSON body instead. A client should handle these: `200` success, `400` validation failed (details in `errors`), `403` access denied (raw access codes), `404` entry does not exist, `405` wrong HTTP method, `429` rate limited (back off and retry later), `503` database temporarily unavailable.
 
 ### /new
 
@@ -167,7 +164,7 @@ Fields:
 * url
 * edit_code
 
-Anonymous creation is rate-limited per IP (roughly 10 per minute on rentry.co; instance-configurable). A `429` status means slow down and retry later.
+Anonymous creation is rate-limited per IP, roughly 10 per minute on rentry.co and configurable per instance. A `429` status means slow down and retry later.
 
 ### /edit/[url]
 
@@ -179,19 +176,19 @@ Fields:
 * text
 * metadata
 * update_mode
-* update_secret_metadata ('true' or 'false', defaults to 'false' — see below)
+* update_secret_metadata ('true' or 'false', defaults to 'false'; see below)
 * new_url
 * new_edit_code
 * new_modify_code (provide 'm:' to unset, this matches the website's functionality)
 
 ##### update_mode
 
-* **replace** (the default): the edit replaces the page — text and the whole metadata set. Omitting text blanks the page, and metadata options omitted from the request are removed (except SECRET_* options, see update_secret_metadata below). For partial edits (e.g. only rotating a code), use upsert.
-* **upsert**: the edit only changes what it provides. Metadata options in the request are added/updated, options omitted are kept, and an option sent with an empty value (`OPTION = `) is removed. Text is kept when omitted.
+* **replace** (the default): the edit replaces the page, both the text and the whole metadata set. Omitting text blanks the page, and metadata options omitted from the request are removed. SECRET_* options are the exception, covered under update_secret_metadata below. For partial edits, such as only rotating a code, use upsert.
+* **upsert**: the edit only changes what it provides. Metadata options in the request are added or updated, options omitted are kept, and an option sent with an empty value (`OPTION = `) is removed. Text is kept when omitted.
 
 ##### update_secret_metadata
 
-SECRET_* metadata (SECRET_EMAIL_ADDRESS, SECRET_RAW_ACCESS_CODE, SECRET_VERIFY) is protected against accidental removal. When update_secret_metadata is 'false' or omitted, any SECRET_* option that was previously set on the entry is preserved as-is, no matter what the request sends for it — omitted, blanked, or changed values are all ignored for those keys.
+SECRET_* metadata (SECRET_EMAIL_ADDRESS, SECRET_RAW_ACCESS_CODE, SECRET_VERIFY) is protected against accidental removal. When update_secret_metadata is 'false' or omitted, any SECRET_* option already set on the entry is preserved as-is, no matter what the request sends for it. Omitted, blanked, and changed values are all ignored for those keys.
 
 To modify or remove a previously-set SECRET_* option, pass update_secret_metadata as the string 'true'. Adding a brand-new SECRET_* option to an entry that didn't have it never requires the flag. Alternatively, update_mode 'upsert' leaves omitted SECRETs untouched as before.
 
@@ -199,10 +196,10 @@ To modify or remove a previously-set SECRET_* option, pass update_secret_metadat
 
 ### /raw/[url]
 
-Accepts GET or POST. Raw access is never open by default. Access codes are issued by rentry admins (contact support@rentry.co) — a page's SECRET_RAW_ACCESS_CODE metadata can only be set to an already-issued code (anything else is rejected at edit time). Raw access is granted when either:
+Accepts GET or POST. Raw access is never open by default. Access codes are issued by rentry admins, so contact support@rentry.co if you need one. A page's SECRET_RAW_ACCESS_CODE metadata can only be set to a code that has already been issued, and anything else is rejected at edit time. Raw access is granted when either:
 
-* The request bears an issued access code in the **rentry-auth header** — this grants raw access to **all** pages.
-* The page itself has an issued **SECRET_RAW_ACCESS_CODE** set — the page is then raw-readable by anyone, no header needed.
+* The request carries an issued access code in the **rentry-auth header**, which grants raw access to **all** pages.
+* The page itself has an issued **SECRET_RAW_ACCESS_CODE** set, which makes that page raw-readable by anyone, with no header needed.
 
 Denials return status `403` with a message explaining which condition failed.
 
@@ -235,4 +232,4 @@ Returns:
 
 Fields:
 
-* edit_code * (the full edit code only — a modify code cannot delete)
+* edit_code * (the full edit code only; a modify code cannot delete)

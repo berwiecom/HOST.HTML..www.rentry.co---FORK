@@ -57,7 +57,7 @@ print(result)
 
 # Removing a previously-set SECRET also needs the opt-in flag. In the default
 # (replace) mode, drop the key by omitting it from the metadata. In upsert mode,
-# send it blank instead — see edit_upsert.py for that pattern.
+# send it blank instead.
 result = client.edit(
     page['url_short'],
     page['edit_code'],

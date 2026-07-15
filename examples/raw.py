@@ -4,10 +4,9 @@
 Raw access is never open by default. Access codes are issued by rentry admins
 (request one from support@rentry.co); a page's SECRET_RAW_ACCESS_CODE metadata
 can only be set to an already-issued code. Access is granted when either:
-- the request bears an issued access code (passed as auth_code below) — this
-  grants raw access to ALL pages, or
-- the page itself has an issued SECRET_RAW_ACCESS_CODE set — the page is then
-  raw-readable without any auth_code.
+- the request bears an issued access code (passed as auth_code below)
+  or
+- the page itself has an issued SECRET_RAW_ACCESS_CODE set.
 
 This example creates a page and then reads it back over raw using an issued
 access code from the RAW_ACCESS_CODE environment variable.
